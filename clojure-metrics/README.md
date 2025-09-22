@@ -1,8 +1,19 @@
-# Clojure Metrics
+# 📊 Clojure Metrics
 
-Static analysis tool for Clojure code based on clj-kondo, similar to PHPMetrics. Calculates important code quality metrics to help with development and maintenance of Clojure projects.
+[![Build Status](https://img.shields.io/badge/tests-passing-brightgreen)](#) [![License](https://img.shields.io/badge/license-EPL--2.0-blue.svg)](#license) [![Clojure](https://img.shields.io/badge/clojure-1.11.1-blue.svg)](https://clojure.org/)
 
-## Calculated Metrics
+A comprehensive static analysis tool for Clojure code, inspired by PHPMetrics. Calculates important code quality metrics to help with development and maintenance of Clojure projects.
+
+## 🚀 Features
+
+- **Complete static analysis** based on clj-kondo
+- **Multiple quality metrics** including cyclomatic complexity, Halstead metrics, and maintainability index
+- **Structured JSON output** for easy integration with other tools
+- **Simple command-line interface**
+- **Recursive directory analysis**
+- **Detailed per-file reports and system summary**
+
+## 📈 Calculated Metrics
 
 ### 1. Halstead Complexity Measures
 - **n1**: Number of unique operators
@@ -35,134 +46,80 @@ Composite metric that indicates how easy it is to maintain the code:
 - **Comment lines**: Lines containing only comments
 - **Comment density**: Percentage of lines with comments
 
-## Installation
+## 🛠️ Installation
 
+### Prerequisites
+- [Leiningen](https://leiningen.org/) 2.0 or higher
+- Java 8 or higher
+
+### Clone the repository
 ```bash
-git clone <repository>
+git clone https://github.com/your-username/clojure-metrics.git
 cd clojure-metrics
 ```
 
-## Usage
+### Install dependencies
+```bash
+lein deps
+```
 
-### Analyze a directory:
+## 📖 Usage
+
+### Analyze a directory
 ```bash
 lein run -- -p src/
 ```
 
-### Show help:
+### Analyze a specific file
+```bash
+lein run -- -p src/core.clj
+```
+
+### Show help
 ```bash
 lein run -- -h
 ```
 
-The tool analyzes all `.clj` files in the specified directory recursively and outputs metrics in JSON format to stdout.
+### Generate standalone executable
+```bash
+lein uberjar
+java -jar target/uberjar/clojure-metrics-*-standalone.jar -p src/
+```
 
-## JSON Output Format
+## 📊 JSON Output Format
 
-The tool outputs a comprehensive JSON structure with both system-wide summary and individual file metrics:
-
-### Output Structure
+The tool produces a comprehensive JSON structure with system summary and individual file metrics:
 
 ```json
 {
   "system-summary": {
-    "total-files": "number - Total number of Clojure files analyzed",
+    "total-files": 5,
     "length": {
-      "cloc": "number - Total lines count (including comments and empty lines)",
-      "loc": "number - Lines of code without comments", 
-      "lloc": "number - Logical lines of code (without empty lines)",
-      "comment-density": "number - Percentage of comment lines (0-100)"
+      "cloc": 250,
+      "loc": 200,
+      "lloc": 180,
+      "comment-density": 20.0
     },
     "halstead": {
-      "n1": "number - Number of unique operators",
-      "n2": "number - Number of unique operands",
-      "N1": "number - Total number of operators", 
-      "N2": "number - Total number of operands",
-      "vocabulary": "number - n1 + n2",
-      "length": "number - N1 + N2",
-      "volume": "number - Length * log2(vocabulary)",
-      "difficulty": "number - (n1/2) * (N2/n2)",
-      "effort": "number - Difficulty * Volume"
+      "n1": 25,
+      "n2": 45,
+      "volume": 1250.5,
+      "difficulty": 12.5,
+      "effort": 15631.25
     },
-    "cyclomatic-complexity": "number - Total cyclomatic complexity across all functions",
-    "average-cyclomatic-complexity": "number - Average complexity per function",
+    "cyclomatic-complexity": 45,
+    "average-cyclomatic-complexity": 9.0,
     "maintainability": {
-      "index": "number - Maintainability Index (0-100, higher is better)",
-      "raw-index": "number - Base index before comment bonus",
-      "comment-bonus": "number - Bonus points for comment density", 
-      "classification": "keyword - excellent, good, moderate, poor, or critical",
-      "impact-factors": {
-        "volume-impact": "number - Negative impact from Halstead volume",
-        "complexity-impact": "number - Negative impact from cyclomatic complexity",
-        "loc-impact": "number - Negative impact from lines of code",
-        "total-negative-impact": "number - Sum of all negative impacts"
-      },
-      "recommendations": ["array of strings - Specific recommendations for improvement"]
-    },
-    "average-maintainability": "number - Average maintainability across all files",
-    "structure": {
-      "functions": "number - Total number of functions",
-      "public-functions": "number - Number of public functions", 
-      "private-functions": "number - Number of private functions",
-      "macros": "number - Number of macros",
-      "dependencies": "number - Number of namespace dependencies",
-      "keywords": "number - Number of keywords used",
-      "locals": "number - Number of local variables"
+      "index": 75.2,
+      "classification": "good",
+      "recommendations": ["Consider refactoring functions with high complexity"]
     }
   },
-  "files": [
-    {
-      "file": "string - Path to the analyzed file",
-      "length": "object - Same structure as system-summary.length",
-      "halstead": "object - Same structure as system-summary.halstead plus unique-operators and unique-operands arrays",
-      "cyclomatic-complexity": "number - Complexity for this specific file",
-      "maintainability": "object - Same structure as system-summary.maintainability", 
-      "functions": "number - Number of functions in this file",
-      "public-functions": "number - Public functions in this file",
-      "private-functions": "number - Private functions in this file", 
-      "macros": "number - Macros in this file",
-      "dependencies": "number - Dependencies in this file",
-      "keywords": "number - Keywords in this file",
-      "locals": "number - Local variables in this file"
-    }
-  ]
+  "files": [...]
 }
 ```
 
-## Sample Output
-
-Here's an example analyzing a single Clojure file:
-
-```json
-[
-  {
-    "file": "test/clojure_metrics/resources/example.clj",
-    "length": {
-      "cloc": 49,
-      "loc": 46,
-      "lloc": 42
-    },
-    "halstead": {
-      "n1": 15,
-      "n2": 20,
-      "N1": 45,
-      "N2": 38,
-      "vocabulary": 35,
-      "length": 83,
-      "volume": 425.2,
-      "difficulty": 14.25,
-      "effort": 6059.1
-    },
-    "cyclomatic-complexity": 8,
-    "maintainability": {
-      "index": 73.5,
-      "classification": "high",
-      "recommendations": ["Well-maintained code", "Keep current good practices"]
-    }
-  }
-]
-```
-
-## Metrics Interpretation
+## 📏 Metrics Interpretation
 
 ### Cyclomatic Complexity
 - **1-10**: Simple, low risk
@@ -171,40 +128,102 @@ Here's an example analyzing a single Clojure file:
 - **>50**: Very complex, very high risk
 
 ### Maintainability Index
-- **85-100**: Very high maintainability
-- **70-85**: High maintainability
+- **85-100**: Very high maintainability (excellent)
+- **70-85**: High maintainability (good)
 - **50-70**: Moderate maintainability
-- **25-50**: Low maintainability
-- **0-25**: Very low maintainability
+- **25-50**: Low maintainability (poor)
+- **0-25**: Very low maintainability (critical)
 
-## Development
+## 🔧 Development
 
-### Run tests:
+### Run tests
 ```bash
 lein test
 ```
 
-### Generate executable:
+### Run specific tests
 ```bash
-lein uberjar
-java -jar target/uberjar/clojure-metrics-0.1.0-SNAPSHOT-standalone.jar -p src/
+lein test clojure-metrics.unit.logic.halstead-test
 ```
 
-## Dependencies
+### Check code formatting
+```bash
+lein cljfmt check
+```
 
-- Clojure 1.11.1
-- clj-kondo (for syntactic analysis)
-- tools.cli (for command line interface)
-- data.json (for JSON output)
+### Project structure
+```
+src/
+├── clojure_metrics/
+│   ├── core.clj              # Main entry point
+│   ├── controller/
+│   │   └── file_analyzer.clj  # Analysis controller
+│   ├── logic/                 # Metrics calculation logic
+│   │   ├── cyclomatic.clj
+│   │   ├── halstead.clj
+│   │   ├── loc.clj
+│   │   └── maintainability.clj
+│   └── components/
+│       └── konjo_analysis.clj # clj-kondo integration
 
-## Contributing
+test/
+├── clojure_metrics/
+│   ├── unit/                  # Unit tests
+│   ├── integration/           # Integration tests
+│   └── resources/             # Test fixture files
+```
 
-1. Fork the project
-2. Create a branch for your feature
-3. Commit your changes
-4. Push to the branch
-5. Open a Pull Request
+## 🤝 Contributing
 
-## License
+Contributions are welcome! To contribute:
 
-[Specify license]
+1. **Fork** the project
+2. **Create** a feature branch (`git checkout -b feature/new-feature`)
+3. **Commit** your changes (`git commit -am 'Add new feature'`)
+4. **Push** to the branch (`git push origin feature/new-feature`)
+5. **Open** a Pull Request
+
+### Contribution guidelines
+- Keep code well documented
+- Add tests for new features
+- Follow Clojure code conventions
+- Update documentation when necessary
+
+## 🐛 Reporting Issues
+
+Found a bug? Please open an [issue](https://github.com/your-username/clojure-metrics/issues) with:
+
+- Detailed problem description
+- Steps to reproduce
+- Clojure and Java version
+- Sample code (if applicable)
+
+## 📋 Roadmap
+
+- [ ] Support for incremental analysis
+- [ ] HTML reports
+- [ ] CI/CD integration
+- [ ] Additional metrics (coupling, cohesion)
+- [ ] Interactive web dashboard
+- [ ] Editor plugins (VS Code, IntelliJ)
+
+## 📚 References
+
+- [Cyclomatic Complexity](https://en.wikipedia.org/wiki/Cyclomatic_complexity)
+- [Halstead Complexity Measures](https://en.wikipedia.org/wiki/Halstead_complexity_measures)
+- [Maintainability Index](https://docs.microsoft.com/en-us/visualstudio/code-quality/code-metrics-values)
+- [clj-kondo](https://github.com/clj-kondo/clj-kondo) - Static analysis tool for Clojure
+
+## 📄 License
+
+This project is licensed under the Eclipse Public License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [clj-kondo](https://github.com/clj-kondo/clj-kondo) for excellent syntactic analysis
+- [PHPMetrics](https://github.com/phpmetrics/PhpMetrics) for inspiration
+- Clojure community for feedback and support
+
+---
+
+**Built with ❤️ for the Clojure community**

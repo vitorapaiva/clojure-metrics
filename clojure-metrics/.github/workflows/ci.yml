@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [8, 11, 17]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Java ${{ matrix.java-version }}
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: ${{ matrix.java-version }}
+    
+    - name: Install Leiningen
+      uses: DeLaGuardo/setup-clojure@10.1
+      with:
+        lein: 2.9.10
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.m2
+          ~/.lein
+        key: ${{ runner.os }}-lein-${{ hashFiles('project.clj') }}
+        restore-keys: |
+          ${{ runner.os }}-lein-
+    
+    - name: Install dependencies
+      run: lein deps
+    
+    - name: Run tests
+      run: lein test
+    
+    - name: Check if project compiles
+      run: lein compile
+    
+    - name: Build uberjar
+      run: lein uberjar
+      if: matrix.java-version == '11'
+    
+    - name: Test CLI functionality
+      run: |
+        java -jar target/uberjar/clojure-metrics-*-standalone.jar -h
+        java -jar target/uberjar/clojure-metrics-*-standalone.jar -p src/
+      if: matrix.java-version == '11'
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Java
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '11'
+    
+    - name: Install Leiningen
+      uses: DeLaGuardo/setup-clojure@10.1
+      with:
+        lein: 2.9.10
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.m2
+          ~/.lein
+        key: ${{ runner.os }}-lein-${{ hashFiles('project.clj') }}
+        restore-keys: |
+          ${{ runner.os }}-lein-
+    
+    - name: Install dependencies
+      run: lein deps
+    
+    # Uncomment if you add cljfmt to your project
+    # - name: Check code formatting
+    #   run: lein cljfmt check
+    
+    - name: Run clj-kondo linting
+      uses: clj-kondo/clj-kondo-action@v1
+      with:
+        args: --lint src test
