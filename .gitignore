@@ -13,6 +13,10 @@ pom.xml.asc
 .hg/
 .clj-kondo/
 .lsp/
-.cursorrules
+.vscode/
+.idea/
+.cpcache/
+.cursor/
 .cursorignore
+.cursorrules
 .cursorignore
