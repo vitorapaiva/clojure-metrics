@@ -1,0 +1,104 @@
+{
+  "system-summary": {
+    "total-files": 1,
+    "length": {
+      "cloc": 48,
+      "loc": 45,
+      "lloc": 43,
+      "comment-density": 6.25
+    },
+    "halstead": {
+      "N2": 9,
+      "effort": 2236.8217508703924,
+      "difficulty": 10.125,
+      "n2": 8,
+      "volume": 220.92066675263135,
+      "N1": 38,
+      "length": 47,
+      "vocabulary": 26,
+      "n1": 18
+    },
+    "cyclomatic-complexity": 19,
+    "average-cyclomatic-complexity": 19,
+    "maintainability": {
+      "index": 100,
+      "raw-index": 77.62997907763815,
+      "comment-bonus": 312.5,
+      "classification": "excellent",
+      "impact-factors": {
+        "volume-impact": 28.068579048126136,
+        "complexity-impact": 4.37,
+        "loc-impact": 60.93144187423571,
+        "total-negative-impact": 93.37002092236185
+      },
+      "recommendations": [
+        "Code is highly maintainable",
+        "Consider code reviews to maintain quality"
+      ]
+    },
+    "average-maintainability": 100,
+    "structure": {
+      "functions": 3,
+      "public-functions": 3,
+      "private-functions": 0,
+      "macros": 0,
+      "dependencies": 1,
+      "keywords": 0,
+      "locals": 0
+    }
+  },
+  "files": [
+    {
+      "private-functions": 0,
+      "macros": 0,
+      "locals": 0,
+      "maintainability": {
+        "index": 100,
+        "raw-index": 77.62997907763815,
+        "comment-bonus": 312.5,
+        "classification": "excellent",
+        "impact-factors": {
+          "volume-impact": 28.068579048126136,
+          "complexity-impact": 4.37,
+          "loc-impact": 60.93144187423571,
+          "total-negative-impact": 93.37002092236185
+        },
+        "recommendations": [
+          "Code is highly maintainable",
+          "Consider code reviews to maintain quality"
+        ]
+      },
+      "halstead": {
+        "N2": 9,
+        "unique-operators": [
+          "first", "=", "dec", "<", "rest", "<=", "*", "conj", "let", 
+          "empty?", "when-not", ">", "defn", "if", "recur", "loop", "cond", "and"
+        ],
+        "effort": 2236.8217508703924,
+        "difficulty": 10.125,
+        "unique-operands": [
+          "classify-number", "string?", "process-list", "even?", 
+          "factorial", "upper-case", "number?", "blank?"
+        ],
+        "n2": 8,
+        "volume": 220.92066675263135,
+        "N1": 38,
+        "length": 47,
+        "vocabulary": 26,
+        "n1": 18
+      },
+      "file": "temp_test_dir/code_example.clj",
+      "functions": 3,
+      "keywords": 0,
+      "length": {
+        "cloc": 48,
+        "loc": 45,
+        "lloc": 43,
+        "comment-density": 6.25
+      },
+      "dependencies": 1,
+      "public-functions": 3,
+      "cyclomatic-complexity": 19
+    }
+  ]
+}

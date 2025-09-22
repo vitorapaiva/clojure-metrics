@@ -1,0 +1,48 @@
+(ns code-example
+  "Example Clojure code to test the metrics tool."
+  (:require [clojure.string :as str]))
+
+;; Simple function to calculate factorial
+(defn factorial
+  "Calculates the factorial of a number."
+  [n]
+  (if (<= n 1)
+    1
+    (* n (factorial (dec n)))))
+
+;; Function with higher cyclomatic complexity
+(defn classify-number
+  "Classifies a number into different categories."
+  [num]
+  (cond
+    (< num 0) :negative
+    (= num 0) :zero
+    (< num 10) :small
+    (< num 100) :medium
+    (< num 1000) :large
+    :else :very-large))
+
+;; Function with loops and nested conditions
+(defn process-list
+  "Processes a list of numbers applying various transformations."
+  [list filter]
+  (loop [items list
+         result []]
+    (if (empty? items)
+      result
+      (let [item (first items)
+            rest-items (rest items)]
+        (cond
+          (and (number? item) (> item 0))
+          (if (= filter :even)
+            (if (even? item)
+              (recur rest-items (conj result (* item 2)))
+              (recur rest-items result))
+            (recur rest-items (conj result item)))
+          
+          (string? item)
+          (when-not (str/blank? item)
+            (recur rest-items (conj result (str/upper-case item))))
+          
+          :else
+          (recur rest-items result))))))
