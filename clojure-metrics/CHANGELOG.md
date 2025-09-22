@@ -12,6 +12,19 @@ All notable changes to this project will be documented in this file. This change
 - Interactive web dashboard
 - Editor plugins (VS Code, IntelliJ)
 
+## [0.0.1] - 2025-09-21
+
+### Added
+- Release version 0.0.1
+- [Add your changes here]
+
+- Support for incremental analysis
+- HTML report generation
+- CI/CD integration
+- Additional metrics (coupling, cohesion)
+- Interactive web dashboard
+- Editor plugins (VS Code, IntelliJ)
+
 ## [0.0.1] - 2025-09-22
 
 ### Added
@@ -51,4 +64,4 @@ All notable changes to this project will be documented in this file. This change
 - Error handling and validation
 
 [Unreleased]: https://github.com/your-username/clojure-metrics/compare/v0.0.1...HEAD
-[0.0.1]: https://github.com/your-username/clojure-metrics/releases/tag/v0.0.1
+[0.0.1]: https://github.com/your-username/clojure-metrics/releases/tag/v0.0.1[0.0.1]: https://github.com/your-username/clojure-metrics/releases/tag/v0.0.1
