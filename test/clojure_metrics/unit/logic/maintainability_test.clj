@@ -26,11 +26,11 @@
       (is (> low-volume-result high-volume-result) "Lower volume should yield higher maintainability"))))
 
 (deftest test-calculate-comment-bonus
-  (testing "Comment bonus calculation"
+  (testing "Comment bonus calculation using MIcw = 50 * sin(sqrt(2.4 * perCM))"
     (is (= 0.0 (maintainability/calculate-comment-bonus 0.0)) "0% comments = 0 bonus")
-    (is (= 25.0 (maintainability/calculate-comment-bonus 0.5)) "50% comments = 25 bonus")
-    (is (= 50.0 (maintainability/calculate-comment-bonus 1.0)) "100% comments = 50 bonus")
-    (is (= 12.5 (maintainability/calculate-comment-bonus 0.25)) "25% comments = 12.5 bonus")))
+    (is (< (Math/abs (- 34.97 (maintainability/calculate-comment-bonus 0.25))) 0.1) "25% comments ≈ 34.97 bonus")
+    (is (< (Math/abs (- 44.46 (maintainability/calculate-comment-bonus 0.5))) 0.1) "50% comments ≈ 44.46 bonus")
+    (is (< (Math/abs (- 49.99 (maintainability/calculate-comment-bonus 1.0))) 0.1) "100% comments ≈ 49.99 bonus")))
 
 (deftest test-normalize-index
   (testing "Index normalization"
@@ -104,8 +104,10 @@
           length-metrics {:lloc 50 :comment-density 0.2}
           result (maintainability/calculate-index halstead-metrics cyclomatic-complexity length-metrics)]
       (is (contains? result :index))
-      (is (contains? result :raw-index))
-      (is (contains? result :comment-bonus))
+      (is (contains? result :miwoc))
+      (is (contains? result :micw))
+      (is (contains? result :raw-index))  ; backward compatibility
+      (is (contains? result :comment-bonus))  ; backward compatibility
       (is (contains? result :classification))
       (is (contains? result :impact-factors))
       (is (contains? result :recommendations))
@@ -123,7 +125,7 @@
           high-comments {:lloc 50 :comment-density 0.5}
           low-result (maintainability/calculate-index halstead-metrics cyclomatic-complexity low-comments)
           high-result (maintainability/calculate-index halstead-metrics cyclomatic-complexity high-comments)]
-      (is (< (:comment-bonus low-result) (:comment-bonus high-result)) "Higher comment density should give bigger bonus")
+      (is (< (:micw low-result) (:micw high-result)) "Higher comment density should give bigger bonus")
       (is (<= (:index low-result) (:index high-result)) "Higher comments should not decrease final index")))
 
   (testing "Edge case: zero values"
@@ -142,10 +144,7 @@
           aggregated-cyclomatic {:total-complexity 15}
           aggregated-length {:lloc 150 :comment-density 0.3}
           result (maintainability/aggregate-maintainability-metrics 
-                  file-analyses 
-                  aggregated-halstead 
-                  aggregated-cyclomatic 
-                  aggregated-length)]
+                  file-analyses)]
       (is (contains? result :system-maintainability))
       (is (contains? result :average-maintainability))
       (is (= 80 (:average-maintainability result)) "Should calculate correct average")
@@ -157,10 +156,7 @@
           aggregated-cyclomatic {:total-complexity 5}
           aggregated-length {:lloc 50 :comment-density 0.2}
           result (maintainability/aggregate-maintainability-metrics 
-                  file-analyses 
-                  aggregated-halstead 
-                  aggregated-cyclomatic 
-                  aggregated-length)]
+                  file-analyses)]
       (is (= 75 (:average-maintainability result)))))
 
   (testing "Aggregate with empty collection"
@@ -168,10 +164,7 @@
           aggregated-cyclomatic {:total-complexity 1}
           aggregated-length {:lloc 1 :comment-density 0.0}
           result (maintainability/aggregate-maintainability-metrics 
-                  [] 
-                  aggregated-halstead 
-                  aggregated-cyclomatic 
-                  aggregated-length)]
+                  [])]
       (is (= 0 (:average-maintainability result))))))
 
 (deftest test-constants

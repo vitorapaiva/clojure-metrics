@@ -38,18 +38,26 @@
 
 ;; Core calculation functions
 (defn calculate-base-index
-  "Calculates base maintainability index using Halstead volume, 
-   cyclomatic complexity, and lines of code."
-  [volume cyclomatic-complexity loc]
+  "Calculates MIwoc (Maintainability Index without comments) using average metrics per module.
+   Formula: MIwoc = 171 - 5.2 * ln(aveV) - 0.23 * aveG - 16.2 * ln(aveLOC)"
+  [average-volume average-cyclomatic average-loc]
   (- MAINTAINABILITY_SCALE_FACTOR
-     (* VOLUME_COEFFICIENT (Math/log volume))
-     (* COMPLEXITY_COEFFICIENT cyclomatic-complexity)
-     (* LOC_COEFFICIENT (Math/log loc))))
+     (* VOLUME_COEFFICIENT (Math/log average-volume))
+     (* COMPLEXITY_COEFFICIENT average-cyclomatic)
+     (* LOC_COEFFICIENT (Math/log average-loc))))
 
 (defn calculate-comment-bonus
-  "Calculates bonus points for comment density."
-  [comment-density]
-  (* COMMENT_BONUS_MULTIPLIER comment-density))
+  "Calculates MIcw (Maintainability Index comment weight) using average comment percentage.
+   Formula: MIcw = 50 * sin(sqrt(2.4 * perCM))"
+  [average-comment-percentage]
+  (let [;; Convert percentage to decimal if needed (0-100 -> 0-1)
+        percent-decimal (if (> average-comment-percentage 1.0)
+                         (/ average-comment-percentage 100.0)
+                         average-comment-percentage)
+        ;; Apply the formula: 50 * sin(sqrt(2.4 * perCM))
+        sqrt-term (Math/sqrt (* 2.4 percent-decimal))
+        sin-term (Math/sin sqrt-term)]
+    (* 50 sin-term)))
 
 (defn normalize-index
   "Normalizes maintainability index to be between 0 and 100."
@@ -102,7 +110,9 @@
      :total-negative-impact (+ volume-impact complexity-impact loc-impact)}))
 
 (defn calculate-index
-  "Calculates comprehensive Maintainability Index with detailed analysis."
+  "Calculates comprehensive Maintainability Index with detailed analysis.
+   For single file: uses file metrics directly as 'averages'
+   For system: should use actual averages across modules"
   [halstead-metrics cyclomatic-complexity length-metrics]
   (let [volume (:volume halstead-metrics)
         ; Use lloc (logical lines) for maintainability calculation
@@ -110,10 +120,15 @@
         ; Use comment density from length metrics for MIcw calculation
         comment-density (:comment-density length-metrics)
         
-        base-index (calculate-base-index volume cyclomatic-complexity loc)
-        comment-bonus (calculate-comment-bonus comment-density)
-        adjusted-index (+ base-index comment-bonus)
-        final-index (normalize-index adjusted-index)
+        ;; Calculate MIwoc = 171 - 5.2 * ln(aveV) - 0.23 * aveG - 16.2 * ln(aveLOC)
+        miwoc (calculate-base-index volume cyclomatic-complexity loc)
+        
+        ;; Calculate MIcw = 50 * sin(sqrt(2.4 * perCM))
+        micw (calculate-comment-bonus comment-density)
+        
+        ;; MI = MIwoc + MIcw
+        mi-total (+ miwoc micw)
+        final-index (normalize-index mi-total)
         classification (classify-maintainability final-index)
         impact-factors (analyze-impact-factors halstead-metrics 
                                                cyclomatic-complexity 
@@ -121,27 +136,63 @@
         recommendations (get-recommendations classification halstead-metrics)]
     
     {:index final-index
-     :raw-index base-index
-     :comment-bonus comment-bonus
+     :miwoc miwoc
+     :micw micw
+     :raw-index miwoc  ; For backward compatibility with tests
+     :comment-bonus micw  ; For backward compatibility with tests
      :classification classification
      :impact-factors impact-factors
      :recommendations recommendations}))
 
 (defn aggregate-maintainability-metrics
-  "Aggregates maintainability metrics from multiple files."
-  [file-analyses aggregated-halstead aggregated-cyclomatic aggregated-length]
+  "Aggregates maintainability metrics from multiple files using correct averages per module."
+  [file-analyses]
   (let [total-files (count file-analyses)
         
-        ;; Calculate system-wide maintainability using aggregated metrics
-        system-maintainability (calculate-index
-                                aggregated-halstead
-                                (:total-complexity aggregated-cyclomatic)
-                                aggregated-length)
+        ;; Calculate averages per module (file) as required by MI formula
+        ;; Filter out nil values to avoid NullPointerException
+        volumes (keep #(get-in % [:halstead :volume]) file-analyses)
+        cyclomatics (keep :cyclomatic-complexity file-analyses)
+        locs (keep #(get-in % [:length :lloc]) file-analyses)
+        comment-densities (keep #(get-in % [:length :comment-density]) file-analyses)
         
-        ;; Calculate average maintainability across files
+        ;; Calculate averages, ensuring we have valid data
+        average-volume (if (seq volumes)
+                        (/ (reduce + volumes) (count volumes))
+                        1.0)  ; Avoid log(0) error
+        average-cyclomatic (if (seq cyclomatics)
+                            (/ (reduce + cyclomatics) (count cyclomatics))
+                            1.0)  ; Default to 1 for minimal complexity
+        average-loc (if (seq locs)
+                     (/ (reduce + locs) (count locs))
+                     1.0)  ; Avoid log(0) error
+        average-comment-density (if (seq comment-densities)
+                                 (/ (reduce + comment-densities) (count comment-densities))
+                                 0.0)
+        
+        ;; Calculate system maintainability using proper averages
+        ;; MIwoc = 171 - 5.2 * ln(aveV) - 0.23 * aveG - 16.2 * ln(aveLOC)
+        miwoc (calculate-base-index average-volume average-cyclomatic average-loc)
+        
+        ;; MIcw = 50 * sin(sqrt(2.4 * perCM))
+        micw (calculate-comment-bonus average-comment-density)
+        
+        ;; MI = MIwoc + MIcw
+        system-mi (+ miwoc micw)
+        final-system-mi (normalize-index system-mi)
+        system-classification (classify-maintainability final-system-mi)
+        
+        ;; Calculate average maintainability across individual files
         avg-maintainability (if (> total-files 0)
                              (/ (reduce + (map #(get-in % [:maintainability :index]) file-analyses)) total-files)
                              0)]
     
-    {:system-maintainability system-maintainability
+    {:system-maintainability {:index final-system-mi
+                              :miwoc miwoc
+                              :micw micw
+                              :classification system-classification
+                              :average-volume average-volume
+                              :average-cyclomatic average-cyclomatic
+                              :average-loc average-loc
+                              :average-comment-density average-comment-density}
      :average-maintainability avg-maintainability}))

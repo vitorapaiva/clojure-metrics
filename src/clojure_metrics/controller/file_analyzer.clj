@@ -84,10 +84,7 @@
         aggregated-cyclomatic (cyclomatic/aggregate-cyclomatic-metrics file-analyses)
         aggregated-structure (aggregate-structure-metrics file-analyses)
         aggregated-maintainability (maintainability/aggregate-maintainability-metrics 
-                                    file-analyses 
-                                    aggregated-halstead 
-                                    aggregated-cyclomatic 
-                                    aggregated-length)]
+                                    file-analyses)]
     
     {:system-summary
      {:total-files total-files

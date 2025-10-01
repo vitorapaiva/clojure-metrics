@@ -64,22 +64,54 @@
      :unique-operands unique-operands}))
 
 (defn calculate-derived-metrics
-  "Calculates derived Halstead metrics."
+  "Calculates all derived Halstead metrics including the complete set of 8 measures."
   [{:keys [n1 n2 N1 N2]}]
   (let [vocabulary (+ n1 n2)
         length (+ N1 N2)
+        
+        ;; Calculated program length: N' = n1 * log2(n1) + n2 * log2(n2)
+        calculated-length (if (and (> n1 ZERO_COMPLEXITY) (> n2 ZERO_COMPLEXITY))
+                           (+ (* n1 (/ (Math/log n1) (Math/log LOG_BASE_2)))
+                              (* n2 (/ (Math/log n2) (Math/log LOG_BASE_2))))
+                           ZERO_COMPLEXITY)
+        
+        ;; Volume: V = N * log2(n)
         volume (if (> vocabulary ZERO_COMPLEXITY)
                  (* length (/ (Math/log vocabulary) (Math/log LOG_BASE_2)))
                  ZERO_COMPLEXITY)
+        
+        ;; Difficulty: D = (n1/2) * (N2/n2)
         difficulty (if (and (> n2 ZERO_COMPLEXITY) (> n1 ZERO_COMPLEXITY))
                      (* (/ n1 OPERATOR_DIFFICULTY_DIVISOR) (/ N2 n2))
                      ZERO_COMPLEXITY)
-        effort (* difficulty volume)]
+        
+        ;; Effort: E = D * V
+        effort (* difficulty volume)
+        
+        ;; Level: L = 1/D (inverse of difficulty)
+        level (if (> difficulty ZERO_COMPLEXITY)
+                (/ 1.0 difficulty)
+                ZERO_COMPLEXITY)
+        
+        ;; Time required to program: T = E/18 seconds
+        time (/ effort 18.0)
+        
+        ;; Number of delivered bugs: B = V/3000
+        bugs (/ volume 3000.0)
+        
+        ;; Intelligent content: I = L * V
+        intelligent-content (* level volume)]
+    
     {:vocabulary vocabulary
      :length length
+     :calculated-length calculated-length
      :volume volume
      :difficulty difficulty
-     :effort effort}))
+     :effort effort
+     :level level
+     :time time
+     :bugs bugs
+     :intelligent-content intelligent-content}))
 
 (defn extract-operators-from-ast
   "Extracts operators from clj-kondo AST with frequency count."
@@ -141,30 +173,21 @@
     (merge basic-metrics derived-metrics)))
 
 (defn aggregate-halstead-metrics
-  "Aggregates Halstead metrics from multiple files."
+  "Aggregates Halstead metrics from multiple files with complete set of measures."
   [file-analyses]
   (let [total-n1 (reduce + (map #(get-in % [:halstead :n1]) file-analyses))
         total-n2 (reduce + (map #(get-in % [:halstead :n2]) file-analyses))
         total-N1 (reduce + (map #(get-in % [:halstead :N1]) file-analyses))
         total-N2 (reduce + (map #(get-in % [:halstead :N2]) file-analyses))
         
-        ;; Recalculate system-wide derived metrics
-        system-vocabulary (+ total-n1 total-n2)
-        system-length (+ total-N1 total-N2)
-        system-volume (if (> system-vocabulary ZERO_COMPLEXITY)
-                       (* system-length (/ (Math/log system-vocabulary) (Math/log LOG_BASE_2)))
-                       ZERO_COMPLEXITY)
-        system-difficulty (if (and (> total-n2 ZERO_COMPLEXITY) (> total-n1 ZERO_COMPLEXITY))
-                           (* (/ total-n1 OPERATOR_DIFFICULTY_DIVISOR) (/ total-N2 total-n2))
-                           ZERO_COMPLEXITY)
-        system-effort (* system-difficulty system-volume)]
+        ;; Recalculate all system-wide derived metrics using the complete formula set
+        system-metrics (calculate-derived-metrics {:n1 total-n1
+                                                   :n2 total-n2
+                                                   :N1 total-N1
+                                                   :N2 total-N2})]
     
-    {:n1 total-n1
-     :n2 total-n2
-     :N1 total-N1
-     :N2 total-N2
-     :vocabulary system-vocabulary
-     :length system-length
-     :volume system-volume
-     :difficulty system-difficulty
-     :effort system-effort}))
+    (merge {:n1 total-n1
+            :n2 total-n2
+            :N1 total-N1
+            :N2 total-N2}
+           system-metrics)))

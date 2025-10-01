@@ -11,32 +11,31 @@
       "N2": 9,
       "effort": 2236.8217508703924,
       "difficulty": 10.125,
+      "time": 124.26787504835514,
       "n2": 8,
+      "bugs": 0.07364022225087712,
       "volume": 220.92066675263135,
+      "level": 0.09876543209876543,
       "N1": 38,
       "length": 47,
+      "intelligent-content": 21.819325111370997,
       "vocabulary": 26,
+      "calculated-length": 99.05865002596161,
       "n1": 18
     },
     "cyclomatic-complexity": 19,
     "average-cyclomatic-complexity": 19,
     "maintainability": {
-      "index": 100,
-      "raw-index": 77.62997907763815,
-      "comment-bonus": 312.5,
+      "index": 96.5143908716872,
+      "miwoc": 77.62997907763815,
+      "micw": 18.884411794049043,
       "classification": "excellent",
-      "impact-factors": {
-        "volume-impact": 28.068579048126136,
-        "complexity-impact": 4.37,
-        "loc-impact": 60.93144187423571,
-        "total-negative-impact": 93.37002092236185
-      },
-      "recommendations": [
-        "Code is highly maintainable",
-        "Consider code reviews to maintain quality"
-      ]
+      "average-volume": 220.92066675263135,
+      "average-cyclomatic": 19,
+      "average-loc": 43,
+      "average-comment-density": 6.25
     },
-    "average-maintainability": 100,
+    "average-maintainability": 96.5143908716872,
     "structure": {
       "functions": 3,
       "public-functions": 3,
@@ -53,9 +52,11 @@
       "macros": 0,
       "locals": 0,
       "maintainability": {
-        "index": 100,
+        "index": 96.5143908716872,
+        "miwoc": 77.62997907763815,
+        "micw": 18.884411794049043,
         "raw-index": 77.62997907763815,
-        "comment-bonus": 312.5,
+        "comment-bonus": 18.884411794049043,
         "classification": "excellent",
         "impact-factors": {
           "volume-impact": 28.068579048126136,
@@ -76,15 +77,20 @@
         ],
         "effort": 2236.8217508703924,
         "difficulty": 10.125,
+        "time": 124.26787504835514,
         "unique-operands": [
           "classify-number", "string?", "process-list", "even?", 
           "factorial", "upper-case", "number?", "blank?"
         ],
         "n2": 8,
+        "bugs": 0.07364022225087712,
         "volume": 220.92066675263135,
+        "level": 0.09876543209876543,
         "N1": 38,
         "length": 47,
+        "intelligent-content": 21.819325111370997,
         "vocabulary": 26,
+        "calculated-length": 99.05865002596161,
         "n1": 18
       },
       "file": "temp_test_dir/code_example.clj",
