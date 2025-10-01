@@ -1,4 +1,4 @@
-(defproject clojure-metrics "0.0.1"
+(defproject clojure-metrics "0.0.2"
   :description "Comprehensive static analysis tool for Clojure code with quality metrics"
   :url "https://github.com/your-username/clojure-metrics"
   :license {:name "EPL-2.0"
