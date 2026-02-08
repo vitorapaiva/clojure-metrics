@@ -5,7 +5,10 @@
    - Halstead Volume (complexity of implementation)
    - Cyclomatic Complexity (complexity of control flow)
    - Lines of Code (size factor)
-   - Comment percentage (documentation factor)")
+   - Comment percentage (documentation factor)
+   
+   Uses the same normalization as PHPMetrics for comparability:
+   MI_normalized = (MI_raw * 100) / 171")
 
 ;; Constants for maintainability index calculation
 (def MAINTAINABILITY_SCALE_FACTOR 
@@ -36,6 +39,10 @@
   "Minimum possible maintainability index value."
   0)
 
+(def PHPMETRICS_NORMALIZATION_FACTOR
+  "Normalization factor used by PHPMetrics: (MI * 100) / 171"
+  171.0)
+
 ;; Core calculation functions
 (defn calculate-base-index
   "Calculates MIwoc (Maintainability Index without comments) using average metrics per module.
@@ -60,19 +67,28 @@
     (* 50 sin-term)))
 
 (defn normalize-index
-  "Normalizes maintainability index to be between 0 and 100."
+  "Normalizes maintainability index to be between 0 and 100.
+   Uses the same normalization as PHPMetrics: (MI * 100) / 171
+   This ensures comparability between Clojure and PHP metrics."
   [index]
-  (max MIN_MAINTAINABILITY_INDEX 
-       (min MAX_MAINTAINABILITY_INDEX index)))
+  (let [normalized (* (/ index PHPMETRICS_NORMALIZATION_FACTOR) 100)]
+    (max MIN_MAINTAINABILITY_INDEX 
+         (min MAX_MAINTAINABILITY_INDEX normalized))))
 
 (defn classify-maintainability
-  "Classifies maintainability based on index value."
+  "Classifies maintainability based on normalized index value.
+   Thresholds aligned with PHPMetrics scale (0-100 normalized):
+   - excellent: >= 65 (highly maintainable)
+   - good: >= 50 (maintainable with minor issues)
+   - moderate: >= 35 (moderately maintainable)
+   - poor: >= 20 (difficult to maintain)
+   - critical: < 20 (very difficult to maintain)"
   [index]
   (cond
-    (>= index 85) :excellent
-    (>= index 70) :good
-    (>= index 50) :moderate
-    (>= index 25) :poor
+    (>= index 65) :excellent
+    (>= index 50) :good
+    (>= index 35) :moderate
+    (>= index 20) :poor
     :else :critical))
 
 (defn get-recommendations
