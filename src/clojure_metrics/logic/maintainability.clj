@@ -45,13 +45,23 @@
 
 ;; Core calculation functions
 (defn calculate-base-index
-  "Calculates MIwoc (Maintainability Index without comments) using average metrics per module.
+  "Calculates raw MIwoc (Maintainability Index without comments).
    Formula: MIwoc = 171 - 5.2 * ln(aveV) - 0.23 * aveG - 16.2 * ln(aveLOC)"
   [average-volume average-cyclomatic average-loc]
   (- MAINTAINABILITY_SCALE_FACTOR
      (* VOLUME_COEFFICIENT (Math/log average-volume))
      (* COMPLEXITY_COEFFICIENT average-cyclomatic)
      (* LOC_COEFFICIENT (Math/log average-loc))))
+
+(defn calculate-miwoc-normalized
+  "PHPMetrics approach: normalize MIwoc to 0-100 scale BEFORE adding comment weight.
+   MIwoC = max((171 - 5.2*ln(V) - 0.23*ccn - 16.2*ln(lloc)) * 100/171, 0)"
+  [average-volume average-cyclomatic average-loc]
+  (let [raw (calculate-base-index average-volume average-cyclomatic average-loc)
+        normalized (* (/ raw PHPMETRICS_NORMALIZATION_FACTOR) 100)]
+    (max MIN_MAINTAINABILITY_INDEX
+         (min MAX_MAINTAINABILITY_INDEX
+              (if (Double/isInfinite normalized) MAINTAINABILITY_SCALE_FACTOR normalized)))))
 
 (defn calculate-comment-bonus
   "Calculates MIcw (Maintainability Index comment weight) using average comment percentage.
@@ -126,25 +136,25 @@
      :total-negative-impact (+ volume-impact complexity-impact loc-impact)}))
 
 (defn calculate-index
-  "Calculates comprehensive Maintainability Index with detailed analysis.
-   For single file: uses file metrics directly as 'averages'
-   For system: should use actual averages across modules"
+  "Calculates Maintainability Index aligned with PHPMetrics for comparability.
+   PHPMetrics: normalize MIwoc to 0-100 first, then add comment weight (no final normalization).
+   MI = MIwoC_normalized + commentWeight (result can exceed 100)"
   [halstead-metrics cyclomatic-complexity length-metrics]
   (let [volume (:volume halstead-metrics)
-        ; Use lloc (logical lines) for maintainability calculation
-        loc (:lloc length-metrics)
-        ; Use comment density from length metrics for MIcw calculation
+        lloc (:lloc length-metrics)
         comment-density (:comment-density length-metrics)
         
-        ;; Calculate MIwoc = 171 - 5.2 * ln(aveV) - 0.23 * aveG - 16.2 * ln(aveLOC)
-        miwoc (calculate-base-index volume cyclomatic-complexity loc)
+        ;; PHPMetrics: MIwoC = max((171 - 5.2*ln(V) - 0.23*ccn - 16.2*ln(lloc)) * 100/171, 0)
+        miwoc-normalized (calculate-miwoc-normalized volume cyclomatic-complexity lloc)
         
-        ;; Calculate MIcw = 50 * sin(sqrt(2.4 * perCM))
+        ;; CM = cloc/loc (PHPMetrics uses loc for total lines)
+        ;; comment-density is already cloc/loc from loc.clj
         micw (calculate-comment-bonus comment-density)
         
-        ;; MI = MIwoc + MIcw
-        mi-total (+ miwoc micw)
-        final-index (normalize-index mi-total)
+        ;; MI = MIwoC + commentWeight (PHPMetrics: no final normalization)
+        mi-total (+ miwoc-normalized micw)
+        ;; For classification: cap at 100 to use standard thresholds
+        final-index (min MAX_MAINTAINABILITY_INDEX (max MIN_MAINTAINABILITY_INDEX mi-total))
         classification (classify-maintainability final-index)
         impact-factors (analyze-impact-factors halstead-metrics 
                                                cyclomatic-complexity 
@@ -152,10 +162,10 @@
         recommendations (get-recommendations classification halstead-metrics)]
     
     {:index final-index
-     :miwoc miwoc
+     :miwoc miwoc-normalized
      :micw micw
-     :raw-index miwoc  ; For backward compatibility with tests
-     :comment-bonus micw  ; For backward compatibility with tests
+     :raw-index miwoc-normalized
+     :comment-bonus micw
      :classification classification
      :impact-factors impact-factors
      :recommendations recommendations}))
@@ -186,16 +196,15 @@
                                  (/ (reduce + comment-densities) (count comment-densities))
                                  0.0)
         
-        ;; Calculate system maintainability using proper averages
-        ;; MIwoc = 171 - 5.2 * ln(aveV) - 0.23 * aveG - 16.2 * ln(aveLOC)
-        miwoc (calculate-base-index average-volume average-cyclomatic average-loc)
+        ;; PHPMetrics approach: normalize MIwoc first, then add comment weight
+        miwoc (calculate-miwoc-normalized average-volume average-cyclomatic average-loc)
         
         ;; MIcw = 50 * sin(sqrt(2.4 * perCM))
         micw (calculate-comment-bonus average-comment-density)
         
-        ;; MI = MIwoc + MIcw
+        ;; MI = MIwoC + commentWeight (PHPMetrics: no final normalization)
         system-mi (+ miwoc micw)
-        final-system-mi (normalize-index system-mi)
+        final-system-mi (min MAX_MAINTAINABILITY_INDEX (max MIN_MAINTAINABILITY_INDEX system-mi))
         system-classification (classify-maintainability final-system-mi)
         
         ;; Calculate average maintainability across individual files

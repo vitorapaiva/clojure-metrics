@@ -88,9 +88,9 @@
         ;; Effort: E = D * V
         effort (* difficulty volume)
         
-        ;; Level: L = 1/D (inverse of difficulty)
-        level (if (> difficulty ZERO_COMPLEXITY)
-                (/ 1.0 difficulty)
+        ;; Level: L = (2/max(1,n1)) * (n2/N2) - PHPMetrics formula for comparability
+        level (if (and (> n2 ZERO_COMPLEXITY) (> N2 ZERO_COMPLEXITY) (> n1 ZERO_COMPLEXITY))
+                (* (/ 2.0 (max 1 n1)) (/ (double n2) N2))
                 ZERO_COMPLEXITY)
         
         ;; Time required to program: T = E/18 seconds
@@ -173,21 +173,35 @@
     (merge basic-metrics derived-metrics)))
 
 (defn aggregate-halstead-metrics
-  "Aggregates Halstead metrics from multiple files with complete set of measures."
+  "Aggregates Halstead metrics from multiple files using averages (PHPMetrics methodology).
+   PHPMetrics reports average values per class, not system totals."
   [file-analyses]
-  (let [total-n1 (reduce + (map #(get-in % [:halstead :n1]) file-analyses))
+  (let [num-files (count file-analyses)
+        
+        ;; Calculate totals for reference
+        total-n1 (reduce + (map #(get-in % [:halstead :n1]) file-analyses))
         total-n2 (reduce + (map #(get-in % [:halstead :n2]) file-analyses))
         total-N1 (reduce + (map #(get-in % [:halstead :N1]) file-analyses))
         total-N2 (reduce + (map #(get-in % [:halstead :N2]) file-analyses))
         
-        ;; Recalculate all system-wide derived metrics using the complete formula set
-        system-metrics (calculate-derived-metrics {:n1 total-n1
-                                                   :n2 total-n2
-                                                   :N1 total-N1
-                                                   :N2 total-N2})]
+        ;; Calculate averages per file (PHPMetrics methodology)
+        avg-volume (/ (reduce + (map #(get-in % [:halstead :volume]) file-analyses)) num-files)
+        avg-difficulty (/ (reduce + (map #(get-in % [:halstead :difficulty]) file-analyses)) num-files)
+        avg-effort (/ (reduce + (map #(get-in % [:halstead :effort]) file-analyses)) num-files)
+        avg-bugs (/ (reduce + (map #(get-in % [:halstead :bugs]) file-analyses)) num-files)
+        avg-vocabulary (/ (reduce + (map #(get-in % [:halstead :vocabulary]) file-analyses)) num-files)
+        avg-length (/ (reduce + (map #(get-in % [:halstead :length]) file-analyses)) num-files)
+        avg-time (/ (reduce + (map #(get-in % [:halstead :time]) file-analyses)) num-files)
+        avg-level (/ (reduce + (map #(get-in % [:halstead :level]) file-analyses)) num-files)
+        avg-intelligent-content (/ (reduce + (map #(get-in % [:halstead :intelligent-content]) file-analyses)) num-files)]
     
-    (merge {:n1 total-n1
-            :n2 total-n2
-            :N1 total-N1
-            :N2 total-N2}
-           system-metrics)))
+    {:totals {:n1 total-n1 :n2 total-n2 :N1 total-N1 :N2 total-N2}
+     :averages {:volume avg-volume
+                :difficulty avg-difficulty
+                :effort avg-effort
+                :bugs avg-bugs
+                :vocabulary avg-vocabulary
+                :length avg-length
+                :time avg-time
+                :level avg-level
+                :intelligent-content avg-intelligent-content}}))

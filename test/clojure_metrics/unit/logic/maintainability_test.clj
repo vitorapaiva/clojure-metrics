@@ -2,6 +2,16 @@
   (:require [clojure.test :refer :all]
             [clojure-metrics.logic.maintainability :as maintainability]))
 
+(deftest test-calculate-miwoc-normalized
+  (testing "PHPMetrics-aligned: MIwoC normalized to 0-100 before adding comment weight"
+    (let [volume 100
+          complexity 5
+          loc 50
+          result (maintainability/calculate-miwoc-normalized volume complexity loc)]
+      (is (number? result))
+      (is (>= result 0) "Should be >= 0")
+      (is (<= result 100) "Should be <= 100 (normalized)"))))
+
 (deftest test-calculate-base-index
   (testing "Base maintainability index calculation"
     (let [volume 100
